@@ -3,12 +3,17 @@ package com.example.demo.principal;
 import com.example.demo.model.DadosEpisodio;
 import com.example.demo.model.DadosSerie;
 import com.example.demo.model.DadosTemporada;
+import com.example.demo.model.Episodio;
 import com.example.demo.service.ConsumoApi;
 import com.example.demo.service.ConverteDados;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Principal {
 
@@ -42,5 +47,35 @@ public class Principal {
 //        }
 
         temporadas.forEach(t -> t.episodios().forEach(e -> System.out.println(e.titulo())));
+
+        System.out.println("\nEpisódios com maior avaliação");
+        List<DadosEpisodio> dadosEpisodios = temporadas.stream().flatMap(t -> t.episodios().stream()).collect(Collectors.toList());
+        dadosEpisodios.stream()
+                .filter(e -> !e.avaliacao().equalsIgnoreCase("N/A") )
+                .sorted(Comparator.comparing(DadosEpisodio::avaliacao).reversed())
+                .limit(5)
+                .forEach(System.out::println);
+
+        List<Episodio> episodio = temporadas.stream()
+                .flatMap(t -> t.episodios().stream()
+                        .map(d -> new Episodio(t.numero(), d))
+                ).collect(Collectors.toList());
+
+        episodio.forEach(System.out::println);
+
+        System.out.println("Apartir de que ano vc quer ver os epsódios?");
+        var ano = leitura.nextInt();
+        leitura.nextLine();
+
+        LocalDate dataBusca = LocalDate.of(ano, 1, 1);
+
+        DateTimeFormatter formatador = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        episodio.stream()
+                .filter(e -> e.getDataLancamento() != null)
+                .filter(e -> e.getDataLancamento().isAfter(dataBusca))
+                .forEach(e -> System.out.println(
+                        "Temporada: " + e.getTemporada() +
+                                " Episódio: " + e.getNumeroEpisodio() +
+                                " Data: " + e.getDataLancamento().format(formatador)));
     }
 }
